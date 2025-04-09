@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>竖屏烟花秀与文字渐显</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            height: 100%;
+            background: url('tupian.png') no-repeat center center;
+            background-size: cover;
+            touch-action: none;
+            font-family: 'Arial', sans-serif;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        #audio-control {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        #text-container {
+            position: absolute;
+            top: 5%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 70%;
+            font-size: 14px;
+            line-height: 1.4;
+            text-align: center;
+            z-index: 5;
+        }
+
+        .container {
+            opacity: 0;
+            transition: opacity 1.5s ease-in;
+            margin-bottom: 8px;
+        }
+
+        .container.black {
+            color: #000;
+        }
+
+        .container.white {
+            color: #fff;
+        }
+
+        .final {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            font-weight: bold;
+            color: #000;
+            opacity: 0;
+            transition: opacity 1.5s ease-in;
+            z-index: 10;
+        }
+
+        .heart {
+            color: red;
+            font-size: 48px;
+            margin-left: 10px;
+        }
+
+        #next-button, #hidden-place-button, #return-button {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            z-index: 10;
+            display: none; /* 初始隐藏按钮 */
+        }
+
+        #hidden-place-button {
+            bottom: 140px; /* 调整位置 */
+        }
+
+        #return-button {
+            bottom: 200px; /* 调整位置 */
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div id="audio-control">点击播放背景音乐</div>
+    <audio id="background-music" loop>
+        <source src="勾指起誓.mp3" type="audio/mpeg">
+        您的浏览器不支持音频播放。
+    </audio>
+
+    <!-- 动态文字容器 -->
+    <div id="text-container">
+        <!-- 第一段文字 -->
+        <div id="text-part-1">
+            <div class="container black">最近我一直在想，人和人之间，或许就像两颗星星——</div>
+            <div class="container black">有时候靠得太近，光芒会不小心刺痛对方；</div>
+            <div class="container black">有时候离得远了，又觉得想念......</div>
+            <div class="container black">但无论如何，我始终希望你是那颗自在发光的星星。</div>
+            <div class="container black">那天说的话，可能带着我的笨拙和犹豫，但你的回应，让我明白了一些很重要的事。</div>
+            <div class="container black">所以……别担心我，更别让这件事影响你的方向。</div>
+            <div class="container black">（停顿片刻，轻声）</div>
+            <div class="container black">你看，这个世界其实很温柔——</div>
+            <div class="container black">比如现在，我还能用这样的方式，对你说一句……</div>
+            <div class="container black">"愿你接下来的每一步，都走得轻盈。"</div>
+        </div>
+
+        <!-- 第二段文字 -->
+        <div id="text-part-2" style="display: none;">
+            <div class="container black">哈哈，既然说到这了，那就再来一段独白——《远岸絮语》</div>
+            <div class="container black">你不在我触手可及的晨光里，</div>
+            <div class="container black">却落在每一片我途经的云上。</div>
+            <div class="container white">当我抬头时，风正经过，</div>
+            <div class="container white">带着你呼吸的节奏，轻轻、轻轻。</div>
+            <div class="container white">我并未真正靠近你的窗台，</div>
+            <div class="container white">却认得你留在晚霞里的字迹。</div>
+            <div class="container white">那些未寄出的信，被暮色染成淡橘色，</div>
+            <div class="container white">像你偶尔欲言又止的温柔。</div>
+            <div class="container white">夜晚的街道空荡，</div>
+            <div class="container white">而你的影子却比路灯更清晰。</div>
+            <div class="container white">我走得很慢，仿佛这样，就能让思念的步调和你一致。</div>
+            <div class="container white">我们之间隔着整座城市的雾，可你的名字，却比月光更易辨认。</div>
+            <div class="container white">我不需要触碰，甚至不必相见，</div>
+            <div class="container white">因为你的存在，早已比拥抱更近。</div>
+        </div>
+
+        <!-- 第三段文字 -->
+        <div id="text-part-3" style="display: none;">
+            <div class="container white">风从极北之地漫卷而来，带着刀刃般的锋利，却又在触到皮肤的瞬间碎成齑粉</div>
+            <div class="container white">这天地间的冷，竟也懂得适可而止。</div>
+            <div class="container white">连哈气都能瞬间结晶成钻石的天气里，我居然在想</div>
+            <div class="container white">要是你在这里，这片绝对零度的浪漫，会不会终于学会融化？</div>
+            <div class="container white">................................</div>
+            <div class="container white">唔~很奇怪的独白对吧......</div>
+            <div class="container white">（唔~，长舒一口气，轻松~）嗯，不想那么多了，除了去做赚钱的事以及追寻自己想要的东西之外，就陪着你吧。</div>
+            <div class="container white">（微笑）你只管像冬天一样，安静地来去。而我已然，懂得了雪的语法....</div>
+        </div>
+    </div>
+
+    <div class="final">爱你！<span class="heart">❤️</span></div>
+    <div id="next-button">跳转到下一段文字</div>
+    <div id="hidden-place-button">隐藏页面</div>
+    <div id="return-button">返回至第一段</div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const backgroundMusic = document.getElementById('background-music');
+        const audioControl = document.getElementById('audio-control');
+        const nextButton = document.getElementById('next-button');
+        const hiddenPlaceButton = document.getElementById('hidden-place-button');
+        const returnButton = document.getElementById('return-button');
+        const textPart1 = document.getElementById('text-part-1');
+        const textPart2 = document.getElementById('text-part-2');
+        const textPart3 = document.getElementById('text-part-3');
+        const finalText = document.querySelector('.final');
+
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+
+        window.onresize = () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        };
+
+        const fireworks = [], particles = [];
+
+        function Firework(sx, sy, tx, ty) {
+            this.x = sx;
+            this.y = sy;
+            this.tx = tx;
+            this.ty = ty;
+            this.speed = 2 + Math.random();
+            this.angle = Math.atan2(ty - sy, tx - sx);
+            this.distance = Math.hypot(tx - sx, ty - sy);
+            this.traveled = 0;
+            this.color = `hsl(${Math.random() * 360},100%,60%)`;
+        }
+
+        Firework.prototype.update = function(i) {
+            this.traveled += this.speed;
+            this.x += Math.cos(this.angle) * this.speed;
+            this.y += Math.sin(this.angle) * this.speed;
+
+            if (this.traveled >= this.distance) {
+                createParticles(this.x, this.y, this.color);
+                fireworks.splice(i, 1);
+            }
+        };
+
+        function Particle(x, y, color) {
+            this.x = x;
+            this.y = y;
+            this.color = color;
+            this.angle = Math.random() * Math.PI * 2;
+            this.speed = Math.random() * 5 + 2;
+            this.gravity = 0.04;
+            this.friction = 0.95;
+            this.alpha = 1;
+            this.decay = 0.01 + Math.random() * 0.03;
+            this.size = Math.random() * 3 + 2;
+        }
+
+        Particle.prototype.update = function(index) {
+            this.speed *= this.friction;
+            this.x += Math.cos(this.angle) * this.speed;
+            this.y += Math.sin(this.angle) * this.speed + this.gravity;
+            this.alpha -= this.decay;
+            if (this.alpha <= 0) particles.splice(index, 1);
+        };
+
+        Particle.prototype.draw = function() {
+            ctx.save();
+            ctx.globalAlpha = this.alpha;
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        };
+
+        function createFirework() {
+            const x = Math.random() * width;
+            const y = Math.random() * height / 2;
+            fireworks.push(new Firework(width / 2, height, x, y));
+        }
+
+        function createParticles(x, y, color) {
+            const count = 150;
+            for (let i = 0; i < count; i++) {
+                let p = new Particle(x, y, color);
+                particles.push(p);
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            ctx.clearRect(0, 0, width, height);
+
+            if (Math.random() < 0.03 && fireworks.length < 5) {
+                createFirework();
+            }
+
+            fireworks.forEach((f, i) => f.update(i));
+            particles.forEach((p, i) => {
+                p.update(i);
+                p.draw();
+            });
+        }
+
+        // 背景音乐控制
+        audioControl.addEventListener('click', () => {
+            if (backgroundMusic.paused) {
+                backgroundMusic.play();
+                audioControl.textContent = "背景音乐播放中...";
+            } else {
+                backgroundMusic.pause();
+                audioControl.textContent = "点击播放背景音乐";
+            }
+        });
+
+        // 文字渐显效果
+        const containers1 = textPart1.querySelectorAll('.container');
+        const containers2 = textPart2.querySelectorAll('.container');
+        const containers3 = textPart3.querySelectorAll('.container');
+
+        let currentPart = 1;
+
+        // 显示文字的函数
+        function showText(containers, callback) {
+            containers.forEach((container, index) => {
+                setTimeout(() => {
+                    container.style.opacity = 1;
+                    if (index === containers.length - 1 && callback) {
+                        callback();
+                    }
+                }, index * 4000);
+            });
+        }
+
+        // 跳转到下一段文字
+        nextButton.addEventListener('click', () => {
+            if (currentPart === 1) {
+                textPart1.style.display = 'none';
+                textPart2.style.display = 'block';
+                document.body.style.backgroundImage = "url('tupian2.png')";
+                nextButton.style.display = 'none';
+                showText(containers2, () => {
+                    currentPart = 2;
+                    nextButton.style.display = 'block'; // 显示跳转到第三段的按钮
+                });
+            } else if (currentPart === 2) {
+                textPart2.style.display = 'none';
+                textPart3.style.display = 'block';
+                document.body.style.backgroundImage = "url('tupian4.png')";
+                nextButton.style.display = 'none';
+                showText(containers3, () => {
+                    currentPart = 3;
+                    hiddenPlaceButton.style.display = 'block'; // 显示隐藏地方的按钮
+                });
+            }
+        });
+
+        // 隐藏地方按钮点击事件
+        hiddenPlaceButton.addEventListener('click', () => {
+            textPart3.style.display = 'none';
+            hiddenPlaceButton.style.display = 'none';
+            document.body.style.backgroundImage = "url('tupian3.png')";
+            setTimeout(() => {
+                finalText.style.opacity = 1;
+                returnButton.style.display = 'block'; // 显示返回按钮
+            }, 5000);
+        });
+
+        // 返回至第一段按钮点击事件
+        returnButton.addEventListener('click', () => {
+            finalText.style.opacity = 0;
+            returnButton.style.display = 'none';
+            textPart1.style.display = 'block';
+            document.body.style.backgroundImage = "url('tupian.png')";
+            currentPart = 1;
+            showText(containers1, () => {
+                nextButton.style.display = 'block'; // 显示跳转到第二段的按钮
+            });
+        });
+
+        // 启动动画和文字渐显
+        animate();
+        showText(containers1, () => {
+            nextButton.style.display = 'block'; // 第一段文字播放完后显示跳转按钮
+        });
+    </script>
+</body>
+</html>
